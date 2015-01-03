@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+{% block body %}
+  <form action="{{ url_for('prediction') }}" method=post class=prediction>
+    <label for="autocomplete">Player 1: </label>
+    <input name="player1" class="player">
+
+    <label for="autocomplete">Player 2: </label>
+    <input name="player2" class="player">
+
+    <input type="submit" value="Predict!">
+  </form>
+ 
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  {% if winner %}<p class=winner><strong>Winner:</strong> {{ winner }}{% endif %}
+
+  <script>
+  $( ".player" ).autocomplete({
+    source: [ 
+              'Novak Djokovic',
+              'Roger Federer',
+              'Rafael Nadal',
+              'Stan Wawrinka',
+              'Kei Nishikori',
+              'Andy Murray',
+              'Tomas Berdych',
+              'Marin Cilic',
+              'David Ferrer',
+              'Grigor Dimitrov',
+              'Jo-Wilfried Tsonga',
+              'Ernests Gulbis',
+              'Feliciano Lopez',
+              'Kevin Anderson',
+              'Tommy Robredo',
+              'Gael Monfils',
+              'John Isner',
+              'Fabio Fognini',
+              'Gilles Simon',
+              'David Goffin',
+              'Alexandr Dolgopolov',
+              'Philipp Kohlschreiber',
+              'Julien Benneteau',
+              'Richard Gasquet',
+              'Ivo Karlovic',
+              'Leonardo Mayer',
+              'Jeremy Chardy',
+              'Pablo Cuevas',
+              'Lukas Rosol',
+              'Santiago Giraldo',
+              'Fernando Verdasco',
+              'Martin Klizan',
+              'Sam Querrey',
+              'Guillermo Garcia-Lopez',
+              'Steve Johnson',
+              'Yen-Hsun Lu',
+              'Benjamin Becker',
+              'Pablo Andujar',
+              'Jack Sock',
+              'Andreas Seppi',
+              'Marcel Granollers',
+              'Gilles Muller',
+              'Mikhail Youzhny',
+              'Denis Istomin',
+              'Lleyton Hewitt',
+              'Simone Bolelli',
+              'Donald Young',
+              'Sergiy Stakhovsky',
+              'Diego Schwartzman',
+              'Juan Monaco',
+              'Paolo Lorenzi',
+              'Thomaz Bellucci',
+              'Teymuraz Gabashvili',
+              'Radek Stepanek',
+              'Dusan Lajovic',
+              'Mikhail Kukushkin',
+              'Nicolas Almagro',
+              'Carlos Berlocq',
+              'Jarkko Nieminen',
+              'Andrey Golubev',
+              'Marinko Matosevic',
+              'Tommy Haas',
+              'Peter Gojowczyk',
+              'Blaz Rola',
+              'Robin Haase',
+              'Igor Sijsling',
+              'Marcos Baghdatis',
+              'Edouard Roger-Vasselin',
+              'Alejandro Falla',
+              'Joao Souza',
+              'Alejandro Gonzalez',
+              'Tatsuma Ito',
+              'Lukas Lacko',
+              'Ivan Dodig',
+              'Paul-Henri Mathieu',
+              'Tobias Kamke',
+              'Dudi Sela',
+              'Go Soeda',
+              'Viktor Troicki',
+              'Maximo Gonzalez',
+              'Marsel Ilhan',
+              'James Ward',
+              'Albert Montanes',
+              'Dmitry Tursunov',
+              'Daniel Gimeno-Traver',
+              'Jurgen Melzer',
+              'Pere Riba',
+              'Tim Smyczek',
+              'Andreas Beck',
+              'Nicolas Mahut',
+              'Benoit Paire',
+              'Farrukh Dustov',
+              'Denis Kudla',
+              'Victor Hanescu',
+              'Horacio Zeballos',
+              'Michael Berrer',
+              'Aleksandr Nedovyesov',
+              'Gastao Elias',
+              'Juan Martin del Potro',
+              'Somdev Devvarman',
+              'Rajeev Ram',
+              'Matthias Bachinger',
+              'Illya Marchenko',
+              'Thiemo De Bakker',
+              'Florian Mayer',
+              'Bradley Klahn',
+              'Frank Dancevic',
+              'Austin Krajicek',
+              'Vincent Millot',
+              'Guido Pella',
+              'Adrian Ungur',
+              'Michael Russell',
+              'Steve Darcis',
+              'Gerald Melzer',
+              'Potito Starace',
+              'Andre Ghem',
+              'Lukasz Kubot',
+              'Wayne Odesnik',
+              'Michal Przysiezny',
+              'Andrej Martin',
+              'Alex Kuznetsov',
+              'Peter Polansky',
+              'Ryan Harrison',
+              'Jesse Huta Galung',
+              'Jan Hernych',
+              'James McGee'
+            ]
+  });
+  </script>
+
+  <!--<ul class=entries>
+  <p>{{prediction}}</p>
+  {% for entry in entries %}
+    <li><h2>{{ entry.name }}</h2>
+  {% else %}
+    <li><em>Unbelievable.  No entries here so far</em>
+  {% endfor %}
+  </ul> -->
+{% endblock %}

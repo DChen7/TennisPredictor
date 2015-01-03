@@ -1,0 +1,180 @@
+import requests
+from bs4 import BeautifulSoup
+from datetime import date
+import re
+import csv
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import linear_model, datasets
+from sklearn.metrics import accuracy_score
+from sklearn import preprocessing
+from sklearn.externals import joblib
+
+BASE_URL = "http://www.atpworldtour.com/Tennis/Players/Top-Players/"
+
+class Player:
+    def __init__(self, name, weight, height, hand, age):
+        self.name = name
+        self.age = age
+        self.height = height
+        self.weight = weight
+        self.hand = hand
+
+def calculate_age(born):
+    today = date.today()
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
+def get_atp_statistics(player):
+    page = requests.get(BASE_URL + player + ".aspx")
+    soup = BeautifulSoup(page.text)
+    player_info = soup.find("ul", attrs={'id' : 'playerBioInfoList'})
+    age = re.search('Age:</span> (\d{2})', player_info).group(1)
+    height = re.search('Height:</span> .* \((\d+) cm\)', player_info).group(1)
+    weight = re.search('Weight:</span> .* \((\d+) kg\)', player_info).group(1)
+    handed = re.search('Plays:</span> (.*)-handed', player_info).group(1)
+    if handed == "Left":
+        hand = 1
+    else:
+        hand = 0
+    return [age, height, weight, hand]
+
+def get_other_statistics(file):
+    with open (file, "r") as myfile:
+        data = myfile.read()
+    soup = BeautifulSoup(data)
+    table = soup.find("table", attrs={"class" : "fs-data-table"})
+    file = open("/Users/danielchen/PycharmProjects/TennisClassification/scrapedStats.csv", 'w')
+    writer = csv.writer(file)
+    writer.writerow(['name', 'height', 'weight', 'hand', 'age'])
+    for row in table.findAll('tr'):
+        groups = re.search('<td><b>(.*)<\/b><\/td>\n.*(\d)-(\d{1,2})<\/td>\n.*(\d{3})<\/td>\n.*(Right|Left)<\/td>\n.*>(\d{1,2})\/(\d{1,2})\/(\d{4})', str(row))
+        if groups:
+            name = groups.group(1)
+            feet = groups.group(2)
+            inches = groups.group(3)
+            height = (int(feet) * 12 + int(inches)) * 2.54
+            weight = int(groups.group(4)) * 0.453592
+            handed = groups.group(5)
+            if handed == "Left":
+                hand = 1
+            else:
+                hand = 0
+            birthdate = date(int(groups.group(8)), int(groups.group(6)), int(groups.group(7)))
+            age = calculate_age(birthdate)
+            writer.writerow([name, height, weight, hand, age])
+
+def map_players():
+    players = {}
+    tennis_features = open("/Users/danielchen/PycharmProjects/TennisClassification/features.csv", "r")
+    reader = csv.reader(tennis_features)
+    feature_file = open("/Users/danielchen/Documents/Flask Projects/TennisClassifier/static/players.csv", 'w')
+    writer = csv.writer(feature_file)
+    next(reader, None)
+    for row in reader:
+        name = row[0]
+        names = name.split()
+        if len(names) < 3:
+            if name == "Jo-Wilfried Tsonga":
+                abbrev_name = "Tsonga J.W."
+            elif name == "Paul-Henri Mathieu":
+                abbrev_name = "Mathieu P.H."
+            elif name == "Yen-Hsun Lu":
+                abbrev_name = "Lu Y.H."
+            else:
+                abbrev_name = names[1] + " " + names[0][0] + "."
+            player = Player(abbrev_name, float(row[1]), float(row[2]), int(row[3]), int(row[4]))
+            players[abbrev_name] = player
+        elif name == "Jesse Huta Galung":
+            players["Huta Galung J."] = Player("Huta Galung J.", float(row[1]), float(row[2]), int(row[3]), int(row[4]))
+        writer.writerow(["\'" + name + "\'", row[1], row[2], row[3], row[4]])
+    return players
+
+# features: age difference, height difference, weight difference, hand combination
+# separate half of the features into wins and the other half into losses
+def extract_features():
+    players = map_players()
+    features = []
+    answers = []
+    feature_file = open("/Users/danielchen/PycharmProjects/TennisClassification/finalFeatures.csv", 'w')
+    writer = csv.writer(feature_file)
+    tennis_matches =  open("/Users/danielchen/PycharmProjects/TennisClassification/processedResults.csv", "r")
+    reader = csv.reader(tennis_matches)
+    next(reader, None)
+    counter = 0
+    for row in reader:
+        player_1 = row[0]
+        player_2 = row[1]
+        if players.has_key(player_1) and players.has_key(player_2):
+            p1 = players[player_1]
+            p2 = players[player_2]
+            if counter % 2 == 0:
+                age_diff = p1.age - p2.age
+                height_diff = p1.height - p2.height
+                weight_diff = p1.weight - p2.weight
+                answers.append(1)
+                if p1.hand == 1 and p2.hand == 0:
+                    hand = 3
+                elif p1.hand == 0 and p2.hand == 1:
+                    hand = 2
+            else:
+                age_diff = p2.age - p1.age
+                height_diff = p2.height - p1.height
+                weight_diff = p2.weight - p1.weight
+                answers.append(0)
+                if p1.hand == 1 and p2.hand == 0:
+                    hand = 2
+                elif p1.hand == 0 and p2.hand == 1:
+                    hand = 3
+            if p1.hand == 1 and p2.hand == 1:
+                hand = 4
+            elif p1.hand == 0 and p2.hand == 0:
+                hand = 1
+            features.append([age_diff, height_diff, weight_diff, hand])
+            writer.writerow([age_diff, height_diff, weight_diff, hand])
+            print [age_diff, height_diff, weight_diff, hand]
+            counter += 1
+
+
+#get_other_statistics("/Users/danielchen/PycharmProjects/TennisClassification/TennisFile")
+#extract_features()
+
+features = open("/Users/danielchen/PycharmProjects/TennisClassification/finalFeatures.csv", "r")
+for i, l in enumerate(features):
+    pass
+num_lines = i + 1
+training = .8 * num_lines
+training_matrix = []
+test_matrix = []
+training_answers = []
+test_answers = []
+counter = 0
+features.seek(0)
+for line in features:
+    new_line = line.strip().split(',')
+    to_add = [int(new_line[0]), float(new_line[1]), float(new_line[2]), int(new_line[3])]
+    if counter < training:
+        training_matrix.append(to_add)
+        if counter % 2 == 0:
+            training_answers.append(1)
+        else:
+            training_answers.append(0)
+    else:
+        test_matrix.append(to_add)
+        if counter % 2 == 0:
+            test_answers.append(1)
+        else:
+            test_answers.append(0)
+    counter += 1
+
+#map_players()
+logreg = linear_model.LogisticRegression(C=1e5)
+training_matrix = preprocessing.scale(training_matrix)
+logreg.fit(training_matrix, training_answers)
+joblib.dump(logreg, 'tennis_classifier.pkl')
+test_matrix = preprocessing.scale(test_matrix)
+predict = logreg.predict(test_matrix)
+print test_matrix
+
+print accuracy_score(test_answers, predict)
+
+
