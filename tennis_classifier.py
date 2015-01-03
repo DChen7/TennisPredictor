@@ -3,15 +3,13 @@ from flask import Flask, request, session, g, redirect, url_for, abort, render_t
 from contextlib import closing
 import csv
 from sklearn.externals import joblib
+import os
 
 app = Flask(__name__)
 
 # configuration
 DATABASE = '/tmp/players.db'
 DEBUG = True
-# SECRET_KEY = 'development key'
-# USERNAME = 'admin'
-# PASSWORD = 'default'
 app.config.from_object(__name__)
 
 def connect_db():
@@ -128,7 +126,8 @@ def extract_features(player1, player2):
 	return [age_diff, height_diff, weight_diff, hand]
 
 if __name__ == '__main__':
-	app.run()
+	port = int(os.environ.get("PORT", 5000))
+	app.run(host='0.0.0.0', port=port)
 
 
 
